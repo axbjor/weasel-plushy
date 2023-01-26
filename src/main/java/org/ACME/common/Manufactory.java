@@ -9,9 +9,10 @@ public abstract class Manufactory {
     protected Warehouse warehouse;
 
     public Manufactory() {
+        this.assemblyLines = new LinkedList<>();
     }
 
-    public void createAssemblyLine(String productName, int productionRate) {
+    public void createAssemblyLine(String productName, int productionRate, int productionGoal, HashMap<String, Integer> productRecipe) {
         assemblyLines.add(new AssemblyLine(productName, productionRate));
     }
 
@@ -19,10 +20,12 @@ public abstract class Manufactory {
         warehouse = new Warehouse();
     }
 
-    public HashMap<String, Integer> runAssemblyLines() {
+    protected HashMap<String, Integer> runAssemblyLines() {
         HashMap<String, Integer> products = new HashMap<>();
         for (AssemblyLine assemblyLine : assemblyLines) {
-            products.put(assemblyLine.getProductName(), assemblyLine.produce());
+            if (assemblyLine.getProductionRate() > 0) {
+                products.put(assemblyLine.getProductName(), assemblyLine.produce());
+            }
         }
         return products;
     }

@@ -8,6 +8,7 @@ import java.util.LinkedList;
 
 public class Simulator {
     Calendar calendar;
+    HashMap<String, Integer> efficiencyCounter;
     LinkedList<InHouseManufactory> inHouseFactories;
     LinkedList<ContractorManufactory> contractorFactories;
 
@@ -19,34 +20,50 @@ public class Simulator {
         weaselPlushyRequirements.put("Snout", 1);
         weaselPlushyRequirements.put("Eye button", 2);
 
-        // Hire subcontractors and build their facilities
-        contractorFactories = new LinkedList<>();
-
-        contractorFactories.add(new ContractorManufactory());
-        contractorFactories.getLast().createAssemblyLine("Fur", 40);
-        contractorFactories.getLast().createLoadingDock(200, 10);
-        contractorFactories.getLast().createWarehouse();
-
-        contractorFactories.add(new ContractorManufactory());
-        contractorFactories.getLast().createAssemblyLine("Filling", 45);
-        contractorFactories.getLast().createLoadingDock(10, 12);
-        contractorFactories.getLast().createWarehouse();
-
-        contractorFactories.add(new ContractorManufactory());
-        contractorFactories.getLast().createAssemblyLine("Snout", 60);
-        contractorFactories.getLast().createLoadingDock(100, 8);
-        contractorFactories.getLast().createWarehouse();
-
-        contractorFactories.add(new ContractorManufactory());
-        contractorFactories.getLast().createAssemblyLine("Eye button", 90);
-        contractorFactories.getLast().createLoadingDock(300, 14);
-        contractorFactories.getLast().createWarehouse();
-
         // Build our facilities
         inHouseFactories = new LinkedList<>();
+
         inHouseFactories.add(new InHouseManufactory());
-        inHouseFactories.getLast().createAssemblyLine("Weasel plushy", 500);
+        inHouseFactories.getLast().createAssemblyLine("Weasel plushy", 500, 1000000, weaselPlushyRequirements);
         inHouseFactories.getLast().createWarehouse();
+
+        // Prepare efficiency counting
+        efficiencyCounter = new HashMap<>();
+        for (InHouseManufactory ourFactory : inHouseFactories) {
+            for (String assemblyLine : ourFactory.getProductionActivity().keySet()) {
+                efficiencyCounter.put(assemblyLine, 0);
+            }
+        }
+
+        // Universal map of how much of a product fit into a delivery
+        HashMap<String, Integer> universalCargoSizeReference = new HashMap<>();
+        universalCargoSizeReference.put("Fur", 200);
+        universalCargoSizeReference.put("Filling", 10);
+        universalCargoSizeReference.put("Snout", 100);
+        universalCargoSizeReference.put("Eye button", 300);
+
+        // Build subcontractor facilities
+        contractorFactories = new LinkedList<>();
+
+        contractorFactories.add(new ContractorManufactory(inHouseFactories.getLast()));
+        contractorFactories.getLast().createAssemblyLine("Fur", 40, Integer.MAX_VALUE, null);
+        contractorFactories.getLast().createLoadingDock(universalCargoSizeReference, 10);
+        contractorFactories.getLast().createWarehouse();
+
+        contractorFactories.add(new ContractorManufactory(inHouseFactories.getLast()));
+        contractorFactories.getLast().createAssemblyLine("Filling", 45, Integer.MAX_VALUE, null);
+        contractorFactories.getLast().createLoadingDock(universalCargoSizeReference, 12);
+        contractorFactories.getLast().createWarehouse();
+
+        contractorFactories.add(new ContractorManufactory(inHouseFactories.getLast()));
+        contractorFactories.getLast().createAssemblyLine("Snout", 60, Integer.MAX_VALUE, null);
+        contractorFactories.getLast().createLoadingDock(universalCargoSizeReference, 8);
+        contractorFactories.getLast().createWarehouse();
+
+        contractorFactories.add(new ContractorManufactory(inHouseFactories.getLast()));
+        contractorFactories.getLast().createAssemblyLine("Eye button", 90, Integer.MAX_VALUE, null);
+        contractorFactories.getLast().createLoadingDock(universalCargoSizeReference, 14);
+        contractorFactories.getLast().createWarehouse();
 
         // Note production start date
         int year = 2023;
@@ -60,38 +77,41 @@ public class Simulator {
     }
 
     protected void simulateProduction() {
-        // while True
-        while (true) {
-
-            for (int i = 0; i < contractorFactories.size(); i++) {
-                contractorFactories.get(i).runAssemblyLines();
+        HashMap<String, Integer> reachedProductionGoals = new HashMap<>();
+        int counter = 0;
+        boolean runSimulation = true;
+        while (runSimulation) {
+            for (ContractorManufactory contractor : contractorFactories) {
+                contractor.work();
+            }
+            for (InHouseManufactory ourFactory : inHouseFactories) {
+                ourFactory.work();
+                updateEfficiencyCounter(ourFactory);
+                reachedProductionGoals = ourFactory.CheckForReachedProductionGoals();
+                System.out.println("COUNTER "+counter);
+                if (!reachedProductionGoals.isEmpty()) {
+                    runSimulation = false;
+                    break;
+                }
+            }
+            if (runSimulation) {
+                calendar.addHour();
+                counter++;
             }
         }
 
-            // for each subcontractor
+        for (String product : reachedProductionGoals.keySet()) {
+            float efficiency = (float) efficiencyCounter.get(product) * 100 / counter;
+            System.out.printf("Production goal of %d %ss reached on %s with efficiency rate: %.1f%%!%n", reachedProductionGoals.get(product), product, calendar.getDate(), efficiency);
+        }
+    }
 
-                // Increase part count
-
-                // If enough for delivery, send
-
-                // for each delivery
-
-                    // If time counter = 0, increase factory part count & delete delivery
-
-                    // decrease time counter
-
-            // Calculate size of maximum product batch (Hard cap 500)
-
-            // Produce batch
-
-            // Increase finished product count
-
-            // Decrease part counts
-
-            // If finished product count >= 1 000 000, break
-
-            // increase time by 1h
-
-        // Record time
+    private void updateEfficiencyCounter(InHouseManufactory ourFactory) {
+        HashMap<String, Boolean> activity = ourFactory.getProductionActivity();
+        for (String product : activity.keySet()) {
+            if (activity.get(product)) {
+                efficiencyCounter.replace(product, efficiencyCounter.get(product) + 1);
+            }
+        }
     }
 }
