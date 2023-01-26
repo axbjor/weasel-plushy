@@ -25,3 +25,23 @@
             // increase time by 1h
 
         // Record time
+
+        Without bonus task:
+        Production goal of 1000000 Weasel plushies reached on Sun Mar 08 00:00:00 EET 2026 with efficiency rate: 20,0%!
+        Deliveries: 139990 / 12 = 11665,833 * 11 = 128324,163
+        Deliveries: 139749 - 128324,163 = 11424,837
+
+        With bonus task:
+
+
+        20/100:
+        Production goal of 1000000 Weasel plushies reached on Sat Mar 28 20:00:00 EET 2026 with efficiency rate: 19,6%!
+        140250
+
+        1/5:
+        Production goal of 1000000 Weasel plushies reached on Mon Nov 23 10:00:00 EET 2026 with efficiency rate: 16,0%!
+        139990
+
+        ???
+        Production goal of 1000000 Weasel plushies reached on Thu Mar 26 18:00:00 EET 2026 with efficiency rate: 19,7%!
+        140009

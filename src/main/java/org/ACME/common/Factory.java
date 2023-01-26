@@ -3,12 +3,12 @@ package org.ACME.common;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-/** Named longer and more awkward "Manufactory" to not confuse with the "Factory" naming convention */
-public abstract class Manufactory {
+/** Named longer and more awkward "Factory" to not confuse with the "Factory" naming convention */
+public abstract class Factory {
     protected LinkedList<AssemblyLine> assemblyLines;
     protected Warehouse warehouse;
 
-    public Manufactory() {
+    public Factory() {
         this.assemblyLines = new LinkedList<>();
     }
 

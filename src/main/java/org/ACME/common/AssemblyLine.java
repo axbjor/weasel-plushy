@@ -3,7 +3,6 @@ package org.ACME.common;
 public class AssemblyLine {
     protected String productName;
     protected int productionRate; // per hour
-
     public AssemblyLine(String name, int productionRate) {
         this.productName = name;
         this.productionRate = productionRate;
@@ -21,3 +20,4 @@ public class AssemblyLine {
         return productionRate;
     }
 }
+

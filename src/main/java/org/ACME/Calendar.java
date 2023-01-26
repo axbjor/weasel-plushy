@@ -22,6 +22,10 @@ public class Calendar {
         return calendar.get(java.util.Calendar.MONTH);
     }
 
+    protected int getDay() {
+        return calendar.get(java.util.Calendar.DAY_OF_WEEK);
+    }
+
     protected Date getDate() {
         return calendar.getTime();
     }

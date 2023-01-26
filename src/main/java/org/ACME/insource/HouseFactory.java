@@ -1,6 +1,6 @@
 package org.ACME.insource;
 
-import org.ACME.common.Manufactory;
+import org.ACME.common.Factory;
 import org.ACME.common.Delivery;
 
 import java.util.ArrayList;
@@ -9,21 +9,22 @@ import java.util.LinkedList;
 import java.util.Set;
 
 /**  */
-public class InHouseManufactory extends Manufactory {
-    protected LinkedList<InHouseAssemblyLine> assemblyLines; /** <- Awkward 'duplicate' attribute */
+public class HouseFactory extends Factory {
+    protected LinkedList<HouseAssemblyLine> assemblyLines; /** <- Awkward 'duplicate' attribute */
     /**
-     * I declare this attribute to avoid having to cast the superclass AssemblyLine into the child InHouseAssemblyLine
+     * I declare this attribute to avoid having to cast the superclass AssemblyLine into the child HouseAssemblyLine
      * every time I need to utilize the child's methods.
      */
+    public int counter = 0; //TODO
 
-    public InHouseManufactory() {
+    public HouseFactory() {
         this.assemblyLines = new LinkedList<>();
     }
 
     @Override
     public void createAssemblyLine(String name, int maxProductionRate, int productionGoal, HashMap<String, Integer> productRecipe) {
-        InHouseAssemblyLine assemblyLine = new InHouseAssemblyLine(name, maxProductionRate, productionGoal, productRecipe);
-        super.assemblyLines.add(assemblyLine); /** Give a reference of the InHouseAssemblyLine to both super and child to make it work */
+        HouseAssemblyLine assemblyLine = new HouseAssemblyLine(name, maxProductionRate, productionGoal, productRecipe);
+        super.assemblyLines.add(assemblyLine); /** Give a reference of the HouseAssemblyLine to both super and child to make it work */
         assemblyLines.add(assemblyLine);
     }
 
@@ -31,7 +32,7 @@ public class InHouseManufactory extends Manufactory {
     public void work() {
         // Calculate production rates
         HashMap<String, Integer> inventory = warehouse.getInventory();
-        for (InHouseAssemblyLine assemblyLine : assemblyLines) {
+        for (HouseAssemblyLine assemblyLine : assemblyLines) {
             HashMap<String, Integer> productRecipe = assemblyLine.getProductRecipe();
             assemblyLine.setProductionRate(calculateProduction(inventory, productRecipe));
         }
@@ -69,7 +70,7 @@ public class InHouseManufactory extends Manufactory {
         // Build a map of required components for all assembly lines combined
         HashMap<String, Integer> requiredComponents = new HashMap<>();
         HashMap<String, Integer> productRecipe;
-        for (InHouseAssemblyLine assemblyLine : assemblyLines) {
+        for (HouseAssemblyLine assemblyLine : assemblyLines) {
             int productionRate = assemblyLine.getProductionRate();
             if (productionRate > 0) {
                 productRecipe = assemblyLine.getProductRecipe();
@@ -90,12 +91,13 @@ public class InHouseManufactory extends Manufactory {
     public void secureDeliveries(ArrayList<Delivery> arrivedDeliveries) {
         for (Delivery delivery : arrivedDeliveries) {
             warehouse.store(delivery.getCargo());
+            counter++;
         }
     }
 
     public HashMap<String, Boolean> getProductionActivity() {
         HashMap<String, Boolean> assemblyLineActiveness = new HashMap<>();
-        for (InHouseAssemblyLine assemblyLine : assemblyLines) {
+        for (HouseAssemblyLine assemblyLine : assemblyLines) {
             if (assemblyLine.isActive()) {
                 assemblyLineActiveness.put(assemblyLine.getProductName(), true);
             }
@@ -106,9 +108,9 @@ public class InHouseManufactory extends Manufactory {
         return assemblyLineActiveness;
     }
 
-    public HashMap<String, Integer> CheckForReachedProductionGoals() {
+    public HashMap<String, Integer> getReachedGoals() {
         HashMap<String, Integer> reachedProductionGoals = new HashMap<>();
-        for (InHouseAssemblyLine assemblyLine : assemblyLines) {
+        for (HouseAssemblyLine assemblyLine : assemblyLines) {
             String product = assemblyLine.getProductName();
             int productionGoal = assemblyLine.getProductionGoal();
             HashMap<String, Integer> inventory = warehouse.getInventory();

@@ -4,14 +4,14 @@ import org.ACME.common.AssemblyLine;
 
 import java.util.HashMap;
 
-public class InHouseAssemblyLine extends AssemblyLine {
+public class HouseAssemblyLine extends AssemblyLine {
     private int maxProductionRate;
     private int productionGoal;
     private HashMap<String, Integer> productRecipe;
     private boolean isActive;
 
 
-    public InHouseAssemblyLine(String name, int maxProductionRate, int productionGoal, HashMap<String,  Integer> productRecipe) {
+    public HouseAssemblyLine(String name, int maxProductionRate, int productionGoal, HashMap<String,  Integer> productRecipe) {
         super(name, maxProductionRate);
         this.maxProductionRate = maxProductionRate;
         this.productionGoal = productionGoal;
