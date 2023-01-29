@@ -1,79 +1,74 @@
 package org.ACME.outsource;
 
 import org.ACME.common.Delivery;
+import org.ACME.common.Factory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/** Handles deliveries for a subcontractor factory to an ACME factory */
 public class LoadingDock {
-    private HashMap<String, Integer> packagingSizeReference; // Map of packaging size for every product
+    private final ArrayList<Delivery> deliveries;
+    private HashMap<String, Integer> packageSizeReference; // Map of package size for every product
     private int deliveryTime; // In hours
-    private ArrayList<Delivery> deliveries;
-    private int lossBorder;
-    private int lossCounter;
-    private int lossCounterLimit;
+    private int counter;
+    private int loseDeliveryOnCount;
+    private float timeMultiplier;
 
-    public LoadingDock(HashMap<String, Integer> packagingSizeReference, int deliveryTime) {
-        this.packagingSizeReference = packagingSizeReference;
+    public LoadingDock(HashMap<String, Integer> packageSizeReference, int deliveryTime) {
+        this.packageSizeReference = packageSizeReference;
         this.deliveryTime = deliveryTime;
         this.deliveries = new ArrayList<>();
-        this.lossBorder = 0;
-        this.lossCounter = 0;
-        this.lossCounterLimit = 100;
+        this.loseDeliveryOnCount = 0;
+        this.counter = 1;
+        this.timeMultiplier = 1;
     }
 
-    public void createDelivery(String productName) {
-        if (lossCounter >= lossBorder) {
-            HashMap<String, Integer> cargo = new HashMap<>();
-            cargo.put(productName, packagingSizeReference.get(productName));
+    public void createDelivery(HashMap<String, Integer> cargo) {
+        if (counter >= loseDeliveryOnCount) {
             deliveries.add(new Delivery(cargo, deliveryTime));
+            if (loseDeliveryOnCount > 0) {
+                counter++;
+            }
         }
-        incrementLossCounter();
+        else {
+            counter = 1;
+        }
     }
 
     public ArrayList<Delivery> checkOnDeliveries() {
-        if (!deliveries.isEmpty()) {
-            ArrayList<Delivery> arrivedDeliveries = new ArrayList<>();
-            for (Delivery delivery : deliveries) {
-                if (delivery.hasArrived()) {
-                    arrivedDeliveries.add(delivery);
-                }
-                delivery.advance();
-            }
-            for (Delivery delivery : arrivedDeliveries) {
-                deliveries.remove(delivery);
-            }
-            return arrivedDeliveries;
+        if (deliveries.isEmpty()) {
+            return null;
         }
-        return null;
-    }
-
-    private void incrementLossCounter() {
-        if (lossBorder > 0) {
-            lossCounter++;
-            if (lossCounter == lossCounterLimit) {
-                lossCounter = 0;
+        ArrayList<Delivery> arrivedDeliveries = new ArrayList<>();
+        for (Delivery delivery : deliveries) {
+            if (delivery.hasArrived()) {
+                arrivedDeliveries.add(delivery);
+            }
+            else {
+                delivery.advance(timeMultiplier);
             }
         }
+        for (Delivery delivery : arrivedDeliveries) {
+            deliveries.remove(delivery);
+        }
+        return arrivedDeliveries;
     }
 
-    public void setLossRate(String lossRate) {
-        String[] split = lossRate.split("/");
-        this.lossBorder = Integer.parseInt(split[0]);
-        this.lossCounterLimit = Integer.parseInt(split[1]);
-        /*
-        if (lossRate.equals("1/5")) {
-            this.lossBorder = 1;
-            this.lossCounterLimit = 5;
+    public void setTimeMultiplier(float timeMultiplier) {
+        this.timeMultiplier = timeMultiplier;
+    }
+
+    public void setLossRate(float lossChance) {
+        if (lossChance == 0) {
+            this.loseDeliveryOnCount = 0;
         }
         else {
-            this.lossBorder = 0;
-            this.lossCounterLimit = 100;
+            this.loseDeliveryOnCount = (int) (1 / lossChance); // Flooring value here insures worst case simulation. Good to be prepared.
         }
-         */
     }
 
-    public HashMap<String, Integer> getPackagingSizeReference() {
-        return packagingSizeReference;
+    public HashMap<String, Integer> getPackageSizeReference() {
+        return packageSizeReference;
     }
 }

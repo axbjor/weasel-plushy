@@ -2,7 +2,7 @@ package org.ACME.common;
 
 import java.util.HashMap;
 
-public abstract class Common {
+public abstract class Helper {
     public static HashMap<String, Integer> addToMap(HashMap<String, Integer> map1, HashMap<String, Integer> map2) {
         for (String key : map2.keySet()) {
             if (map1.containsKey(key)) {

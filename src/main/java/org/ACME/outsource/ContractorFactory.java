@@ -7,36 +7,42 @@ import org.ACME.insource.HouseFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/** Subcontractor factory that produces components for ACME factories */
 public class ContractorFactory extends Factory {
-    private final HouseFactory customer;
+    private ArrayList<ContractorAssemblyLine> assemblyLines;
+    private HouseFactory customer;
     private LoadingDock loadingDock;
 
     public ContractorFactory(HouseFactory customer) {
         this.customer = customer;
+        assemblyLines = new ArrayList<>();
     }
 
-    public void createLoadingDock(HashMap<String, Integer> cargoSizeReference, int deliveryTime) {
-        loadingDock = new LoadingDock(cargoSizeReference ,deliveryTime);
+    public void createAssemblyLine(String productName, int productionRate) {
+        assemblyLines.add(new ContractorAssemblyLine(productName, productionRate));
+    }
+
+    public void createLoadingDock(HashMap<String, Integer> packageSizeReference, int deliveryTime) {
+        loadingDock = new LoadingDock(packageSizeReference ,deliveryTime);
     }
 
     @Override
     public void work() {
         // Produce and store
-        warehouse.store(runAssemblyLines());
-
-        // Send deliveries if enough produce
+        for (ContractorAssemblyLine assemblyLine : assemblyLines) {
+            warehouse.store(assemblyLine.produce());
+        }
+        // Deliver
         HashMap<String, Integer> inventory = warehouse.getInventory();
-        HashMap<String, Integer> packagingSizeReference = loadingDock.getPackagingSizeReference();
+        HashMap<String, Integer> packageSizeReference = loadingDock.getPackageSizeReference();
         for (String product : inventory.keySet()) {
-            int maxPackageAmount = calculateMaxPackageAmount(product, inventory, packagingSizeReference);
-            int total = maxPackageAmount * packagingSizeReference.get(product);
-            HashMap<String, Integer> cargo = new HashMap<>();
-            cargo.put(product, total);
-            if (warehouse.retrieve(cargo)) {
-                for (int i = 0; i < maxPackageAmount; i++) {
-                    loadingDock.createDelivery(product);
-                }
+            int packageAmount = calculatePackageAmount(product, inventory, packageSizeReference);
+            if (packageAmount == 0) {
+                continue;
             }
+            HashMap<String, Integer> cargo = new HashMap<>();
+            cargo.put(product, packageSizeReference.get(product));
+            sendDeliveries(cargo, packageAmount);
         }
 
         // Manage deliveries
@@ -46,14 +52,27 @@ public class ContractorFactory extends Factory {
         }
     }
 
-    private int calculateMaxPackageAmount(String product, HashMap<String, Integer> inventory, HashMap<String, Integer> packagingSizeReference) {
-        int amount = inventory.get(product);
-        return Math.floorDiv(amount, packagingSizeReference.get(product));
+    private int calculatePackageAmount(String product, HashMap<String, Integer> inventory, HashMap<String, Integer> packageSizeReference) {
+        int inventoryAmount = inventory.get(product);
+        int packageSize = packageSizeReference.get(product);
+        return Math.floorDiv(inventoryAmount, packageSize);
+    }
+
+    private void sendDeliveries(HashMap<String, Integer> cargo, int amount) {
+        for (int i = 0; i < amount; i++) {
+            if (!warehouse.retrieve(cargo)) {
+                break;
+            }
+            loadingDock.createDelivery(cargo);
+        }
     }
 
     private void reportDeliveryArrivals(ArrayList<Delivery> arrivedDeliveries) {
-        customer.secureDeliveries(arrivedDeliveries);
-        System.out.println("DELIVERIES " + arrivedDeliveries.size());
+        customer.storeDeliveries(arrivedDeliveries);
+    }
+
+    public ArrayList<ContractorAssemblyLine> getAssemblyLines() {
+        return assemblyLines;
     }
 
     public LoadingDock getLoadingDock() {

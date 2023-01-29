@@ -1,34 +1,14 @@
 package org.ACME.common;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-
-/** Named longer and more awkward "Factory" to not confuse with the "Factory" naming convention */
+/** Abstract superclass for ACME and subcontractor factories */
 public abstract class Factory {
-    protected LinkedList<AssemblyLine> assemblyLines;
     protected Warehouse warehouse;
 
-    public Factory() {
-        this.assemblyLines = new LinkedList<>();
-    }
-
-    public void createAssemblyLine(String productName, int productionRate, int productionGoal, HashMap<String, Integer> productRecipe) {
-        assemblyLines.add(new AssemblyLine(productName, productionRate));
-    }
+    public Factory() {}
 
     public void createWarehouse() {
         warehouse = new Warehouse();
     }
 
-    protected HashMap<String, Integer> runAssemblyLines() {
-        HashMap<String, Integer> products = new HashMap<>();
-        for (AssemblyLine assemblyLine : assemblyLines) {
-            if (assemblyLine.getProductionRate() > 0) {
-                products.put(assemblyLine.getProductName(), assemblyLine.produce());
-            }
-        }
-        return products;
-    }
-
-    public abstract void work();
+    public void work() {}
 }

@@ -2,9 +2,10 @@ package org.ACME.common;
 
 import java.util.HashMap;
 
+/** Represents the packages from loading docks to ACME factories */
 public class Delivery {
     HashMap<String, Integer> cargo;
-    private int deliveryTimeCounter;
+    private float deliveryTimeCounter;
 
     public Delivery(HashMap<String, Integer> cargo, int deliveryTimeCounter) {
         this.cargo = cargo;
@@ -12,14 +13,11 @@ public class Delivery {
     }
 
     public boolean hasArrived() {
-        if (deliveryTimeCounter == 0) {
-            return true;
-        }
-        return false;
+        return deliveryTimeCounter <= 0;
     }
 
-    public void advance() {
-        deliveryTimeCounter--;
+    public void advance(float timeMultiplier) {
+        deliveryTimeCounter -= 1 * timeMultiplier;
     }
 
     public HashMap<String, Integer> getCargo() {

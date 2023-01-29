@@ -1,18 +1,25 @@
 package org.ACME;
 
 import org.ACME.insource.HouseFactory;
+import org.ACME.outsource.ContractorAssemblyLine;
 import org.ACME.outsource.ContractorFactory;
+import org.ACME.outsource.LoadingDock;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 
 /** Master class for simulating production */
 public class Simulator {
-    private LinkedList<HouseFactory> houseFactories;
-    private LinkedList<ContractorFactory> contractorFactories;
-    private HashMap<String, Integer> efficiencyCounter;
-    private Calendar calendar;
-    private String lossRate;
+    private final LinkedList<HouseFactory> houseFactories;
+    private final LinkedList<ContractorFactory> contractorFactories;
+    private final HashMap<String, Integer> efficiencyCounter;
+    private final Calendar calendar;
+    private String sabotageTarget;
+    private int sabotageDuration;
+    private int sabotagePeriod;
+    private int alterMonth;
+    private float timeMultiplier;
+    private float lossChance;
 
     public Simulator() {
         this.houseFactories = new LinkedList<>();
@@ -23,15 +30,15 @@ public class Simulator {
 
     protected void setup() {
         // Identify parts needed for products
-        HashMap<String, Integer> weaselPlushieParts = new HashMap<>();
-        weaselPlushieParts.put("Fur", 1);
-        weaselPlushieParts.put("Filling", 1);
-        weaselPlushieParts.put("Snout", 1);
-        weaselPlushieParts.put("Eye button", 2);
+        HashMap<String, Integer> weaselPlushieRecipe = new HashMap<>();
+        weaselPlushieRecipe.put("Fur", 1);
+        weaselPlushieRecipe.put("Filling", 1);
+        weaselPlushieRecipe.put("Snout", 1);
+        weaselPlushieRecipe.put("Eye button", 2);
 
         // Build house facilities
         houseFactories.add(new HouseFactory());
-        houseFactories.getLast().createAssemblyLine("Weasel plushie", 500, 1000000, weaselPlushieParts);
+        houseFactories.getLast().createAssemblyLine("Weasel plushie", 500, 1000000, weaselPlushieRecipe);
         houseFactories.getLast().createWarehouse();
 
         // Prepare efficiency rating
@@ -50,22 +57,22 @@ public class Simulator {
 
         // Build contractor facilities
         contractorFactories.add(new ContractorFactory(houseFactories.getLast()));
-        contractorFactories.getLast().createAssemblyLine("Fur", 40, Integer.MAX_VALUE, null); // Contractor factories produce infinitely
+        contractorFactories.getLast().createAssemblyLine("Fur", 40);
         contractorFactories.getLast().createLoadingDock(packagingSizeReference, 10);
         contractorFactories.getLast().createWarehouse();
 
         contractorFactories.add(new ContractorFactory(houseFactories.getLast()));
-        contractorFactories.getLast().createAssemblyLine("Filling", 45, Integer.MAX_VALUE, null);
+        contractorFactories.getLast().createAssemblyLine("Filling", 45);
         contractorFactories.getLast().createLoadingDock(packagingSizeReference, 12);
         contractorFactories.getLast().createWarehouse();
 
         contractorFactories.add(new ContractorFactory(houseFactories.getLast()));
-        contractorFactories.getLast().createAssemblyLine("Snout", 60, Integer.MAX_VALUE, null);
+        contractorFactories.getLast().createAssemblyLine("Snout", 60);
         contractorFactories.getLast().createLoadingDock(packagingSizeReference, 8);
         contractorFactories.getLast().createWarehouse();
 
         contractorFactories.add(new ContractorFactory(houseFactories.getLast()));
-        contractorFactories.getLast().createAssemblyLine("Eye button", 90, Integer.MAX_VALUE, null);
+        contractorFactories.getLast().createAssemblyLine("Eye button", 90);
         contractorFactories.getLast().createLoadingDock(packagingSizeReference, 14);
         contractorFactories.getLast().createWarehouse();
 
@@ -78,49 +85,74 @@ public class Simulator {
         int seconds = 0;
         calendar.setDate(year, month, day, hours, minutes, seconds);
 
-        //
+        // Sabotage
+        this.sabotageTarget = "Snout";
+        this.sabotageDuration = 12; // In hours
+        int sabotageAttemptPeriod = 168; // In hours | 7 days = 7 * 24h = 168h
+        float sabotageSuccessChance = 0.1f;
+        this.sabotagePeriod = (int) (sabotageAttemptPeriod / sabotageSuccessChance);
 
-        // Delivery loss rate in December
-        this.lossRate = "1/5"; // Input as smallest fraction to improve simulation accuracy
+        // Different circumstance month
+        this.alterMonth = 11; // December
+        // Delivery speed multiplier
+        this.timeMultiplier = 0.5f;
+        // Delivery loss rate
+        this.lossChance = 0.2f;
     }
 
     protected void simulateProduction() {
+        System.out.printf("Production started on:%n%s%n", calendar.getDate());
         HashMap<String, Integer> reachedGoals = new HashMap<>();
         int counter = 0;
         boolean run = true;
         while (run) {
             for (ContractorFactory contractorFactory : contractorFactories) {
-                if (calendar.getMonth() == 11) { // DECEMBER
-                    contractorFactory.getLoadingDock().setLossRate(lossRate);
+                // Sabotage
+                if (counter % sabotagePeriod == 0) {
+                    sabotage(contractorFactory);
+                }
+                // Weather
+                LoadingDock loadingDock = contractorFactory.getLoadingDock();
+                if (calendar.getMonth() == alterMonth) {
+                    loadingDock.setLossRate(lossChance);
+                    loadingDock.setTimeMultiplier(timeMultiplier);
                 }
                 else {
-                    contractorFactory.getLoadingDock().setLossRate("0/100");
+                    loadingDock.setLossRate(0);
+                    loadingDock.setTimeMultiplier(1);
                 }
-                if (counter % 7 == 0 && counter % 100 == 0) {
-                    contractorFactory.getLoadingDock().setLossRate(lossRate);
-                }
+                // Work
                 contractorFactory.work();
             }
             for (HouseFactory houseFactory : houseFactories) {
+                // Work
                 houseFactory.work();
+                // Note efficiency
                 incrementEfficiencyCounter(houseFactory);
+                // Check for reached goals
                 reachedGoals = houseFactory.getReachedGoals();
-                System.out.println("COUNTER "+counter);
-                if (!reachedGoals.isEmpty()) {
+                if (!reachedGoals.isEmpty()) { // Stop simulation on first production goal
                     run = false;
                     break;
                 }
             }
             if (run) {
-                calendar.addHour();
                 counter++;
+                calendar.addHour();
             }
         }
-
+        // Simulation result
         for (String product : reachedGoals.keySet()) {
             float efficiency = (float) efficiencyCounter.get(product) * 100 / counter;
-            System.out.printf("Production goal of %d %ss reached on %s with efficiency rate: %.1f%%!%n", reachedGoals.get(product), product, calendar.getDate(), efficiency);
-            System.out.println(houseFactories.getLast().counter);
+            System.out.printf("%nProduction goal of %d %ss with efficiency rate %.2f%% reached on:%n%s%n", reachedGoals.get(product), product, efficiency, calendar.getDate());
+        }
+    }
+
+    private void sabotage(ContractorFactory contractorFactory) {
+        for (ContractorAssemblyLine contractorAssemblyLine : contractorFactory.getAssemblyLines()) {
+            if (contractorAssemblyLine.getProductName().equals(sabotageTarget)) {
+                contractorAssemblyLine.setSabotageTimer(sabotageDuration);
+            }
         }
     }
 

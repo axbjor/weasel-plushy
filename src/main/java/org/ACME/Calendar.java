@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 public class Calendar {
-    private GregorianCalendar calendar;
+    private final GregorianCalendar calendar;
 
     protected Calendar() {
         calendar = new GregorianCalendar();
@@ -20,10 +20,6 @@ public class Calendar {
 
     protected int getMonth() {
         return calendar.get(java.util.Calendar.MONTH);
-    }
-
-    protected int getDay() {
-        return calendar.get(java.util.Calendar.DAY_OF_WEEK);
     }
 
     protected Date getDate() {
