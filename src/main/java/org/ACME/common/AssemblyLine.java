@@ -1,21 +1,25 @@
 package org.ACME.common;
 
-public class AssemblyLine {
-    protected String ProductName;
+import java.util.HashMap;
+
+/** Abstract superclass for ACME and subcontractor assembly lines */
+public abstract class AssemblyLine {
+    protected String productName;
     protected int productionRate; // per hour
-    protected int productCount;
 
     public AssemblyLine(String name, int productionRate) {
-        this.ProductName = name;
+        this.productName = name;
         this.productionRate = productionRate;
-        this.productCount = 0;
+    }
+
+    public HashMap<String, Integer> produce() {
+        HashMap<String, Integer> products = new HashMap<>();
+        products.put(productName, productionRate);
+        return products;
     }
 
     public String getProductName() {
-        return ProductName;
-    }
-
-    public int produce() {
-        return productionRate;
+        return productName;
     }
 }
+
